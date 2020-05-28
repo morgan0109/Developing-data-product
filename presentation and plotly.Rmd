@@ -1,0 +1,84 @@
+---
+title: "Presentation and Plotly project"
+author: "morgan"
+date: "5/28/2020"
+output: ioslides_presentation
+---
+
+##Introduction
+##This code is based on the 102 sectors divided into blocks in the stock market and the monthly variance of the daily rate of return of the sectors as an index, carries out cluster analysis and reclassifies the blocks.
+
+##Open the data
+```{r results='hide',tidy=TRUE}
+library(readxl)
+data <- read_excel("/Users/lydc/datascience/板块/data.xlsx", col_types = c("text",
+"numeric", "numeric", "numeric", "numeric",
+"numeric", "numeric", "numeric", "numeric",
+"numeric", "numeric", "numeric", "numeric",
+"numeric", "numeric", "numeric", "numeric",
+"numeric", "numeric", "numeric", "numeric",
+"numeric", "numeric", "numeric", "numeric",
+"numeric", "numeric", "numeric", "numeric",
+"numeric", "numeric", "numeric", "numeric",
+"numeric", "numeric", "numeric", "numeric",
+"numeric", "numeric", "numeric", "numeric",
+"numeric", "numeric", "numeric", "numeric",
+"numeric", "numeric", "numeric", "numeric",
+"numeric", "numeric", "numeric", "numeric",
+"numeric", "numeric", "numeric", "numeric",
+"numeric", "numeric", "numeric", "numeric"))
+str(data)
+```
+
+##Data cleaning and preprocessing
+```{r}
+data1 <- as.data.frame(data)
+head(data1)
+row.names(data1) <- data1$...1
+data2 <- subset(data1,select = -...1)##Converts the name of the block from a variable to a label
+head(data2)
+```
+
+##Determine the optimal number of clusters
+```{r}
+library(factoextra)
+library(ggpubr)
+library(labeling)
+library(farver)
+plot1 <- fviz_nbclust(data2,kmeans,method = "wss")+geom_vline(xintercept = 4,linetype = 2)##The results show that the best cluster number is 4
+```
+
+##Perform cluster analysis and output results
+```{r tidy=TRUE}
+set.seed(1234)
+km <- kmeans(data2,4)
+data3 <- cbind(data2,cluster = km$cluster)##Put the clustering results into the data
+table(data3$cluster)
+plot2 <- fviz_cluster(km,data = data2,palette = "set2",ellipse.type  = "euclid",ellipse.level = 1.2,star.plot = TRUE,repel = TRUE,ggtheme = theme_minimal(),pointsize = 1.0,labelsize = 4,outlier.shape = 50)##Show the clustering results
+```
+
+##Draw the clustering dendrogram
+```{r}
+library(dendextend)
+set.seed(123)
+result <- dist(data2,method = "euclidean")
+hc <- hclust(d = result,method = "ward.D2")
+plot3 <- fviz_dend(hc,k = 5,cex = 0.3, k_colors = c("#2E9FDF", "#00AFBB", "#E7B800", "#FC4E07"),color_labels_by_k = TRUE,rect = TRUE)##The result of the dendrogram shows that a cluster number of five is also a good choice
+```
+
+##Perform the cluster analysis again
+```{r}
+set.seed(12345)
+km <- kmeans(data2,5)
+data4 <- cbind(data2,cluster = km$cluster)
+table(data4$cluster)
+plot4 <- fviz_cluster(km,data = data2,palette = "set2",ellipse.type  = "euclid",ellipse.level = 1.2,star.plot = TRUE,repel = TRUE,ggtheme = theme_minimal(),pointsize = 1.0,labelsize = 4,outlier.shape = 50)
+```
+
+##Make interactive plots
+```{r}
+plotly::ggplotly(plot1)
+plotly::ggplotly(plot2)
+plotly::ggplotly(plot3)
+plotly::ggplotly(plot4)
+```
